@@ -1,4 +1,5 @@
 import numpy as np
+import json
 
 class Arm:
   def __init__(self, mean, std):
@@ -7,6 +8,9 @@ class Arm:
 
   def __str__(self):
     return "Arm: mean {}, std: {}".format(self.mean, self.std)
+
+  def to_json(self):
+    return self.__dict__
 
   def pull(self):
     return np.random.normal(self.mean, self.std)
@@ -36,6 +40,12 @@ class KArmedBanditEnv:
     return "\n".join([
       "{}: {}".format(i, str(arm))
       for i, arm in enumerate(self.arms)])
+
+  def to_json(self):
+    return {
+      "k": self.k,
+      "arms": self.arms
+    }
 
   def reset(self):
     """Reset bandit"""

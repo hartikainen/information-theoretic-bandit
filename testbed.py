@@ -123,6 +123,9 @@ def main(args):
   result = args.copy()
   result["timestamp"] = datetime.now().isoformat()
   result["agent_path"] = path
+  result["env"] = {
+    "arms": env.arms # arm.__dict__ for arm in env.arms
+  }
 
   result_file = args.get("result_file")
   if result_file is not None:
