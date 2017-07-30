@@ -21,3 +21,10 @@ def dump_result(filename, results):
       json.dump(data, f, sort_keys=True,
                 indent=4, separators=(',', ': '),
                 cls=ObjectEncoder)
+
+def load_result(filename):
+  with open(filename, "r") as f:
+    results = json.load(f)
+
+  # TODO: change this
+  return results[0]
