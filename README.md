@@ -1,18 +1,16 @@
 # information-theoretic-bandit
 This repository currently implements the testbed for multi-arm bandit problem presented in Chapter 2 of [1].
-## TODO:
-Currently, the testbed outputs results only for single experiment run. Should be extended to allow experiments and visualizations for multiple runs.
 
 ## To run
 To run a single bandit experiment:
 ```
-usage: testbed.py [-h] [-v VERBOSE] [--num_arms NUM_ARMS]
-                  [--arms_mean ARMS_MEAN]
+usage: testbed.py [-h] [-v VERBOSE] [--num_runs NUM_RUNS]
+                  [--num_arms NUM_ARMS] [--arms_mean ARMS_MEAN]
                   [--arms_mean_params [ARMS_MEAN_PARAMS [ARMS_MEAN_PARAMS ...]]]
                   [--arms_std ARMS_STD]
                   [--arms_std_params [ARMS_STD_PARAMS [ARMS_STD_PARAMS ...]]]
                   [--agent_class AGENT_CLASS] [--num-episodes NUM_EPISODES]
-                  [--result-file RESULT_FILE]
+                  [--results-file RESULTS_FILE] [--epsilon EPSILON]
 
 K-armed bandit testbed
 
@@ -20,6 +18,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -v VERBOSE, --verbose VERBOSE
                         Verbose
+  --num_runs NUM_RUNS   Number runs for the experiment
   --num_arms NUM_ARMS, -k NUM_ARMS
                         Number arms for the bandit
   --arms_mean ARMS_MEAN
@@ -45,29 +44,30 @@ optional arguments:
                         an agent. Defaults to agents.DefaultAgent.
   --num-episodes NUM_EPISODES
                         Number of episodes
-  --result-file RESULT_FILE
+  --results-file RESULTS_FILE
                         File to write results to
+  --epsilon EPSILON     epsilon for epsilon-greedy exploration
 ```
 
-For example, running `10-armed bandit`, where arm value function means are taken from normal distribution with mean `μ=0` and standard deviation `σ=1.0`, and writing results in `results/result-1.json`:
+For example, running `10-armed bandit`, where arm value function means are taken from normal distribution with mean `μ=0` and standard deviation `σ=1.0`, and greedy-exploration of epsilon=0.1 and writing results in `results/result-1.pickle`:
 ```
-python ./testbed.py --num_arms=5 --arms_mean="normal" --arms_mean_params 0 1 --result-file="./results/result-1.json"
+python ./testbed.py --num_arms=10 --arms_mean="normal" --arms_mean_params 0 1  --epsilon=0.1 --results-file="./results/epsilon-0.1.pickle"
 ```
 ## To visualize the results
 The results recorded by `testbed.py` can be visualized with `vis.py`:
 ```
-usage: vis.py [-h] --result-file RESULT_FILE
+usage: vis.py [-h] --results-file RESULTS_FILE
 
 Data visualization for K-armed bandit.
 
 optional arguments:
   -h, --help            show this help message and exit
-  --result-file RESULT_FILE
+  --results-file RESULTS_FILE
                         File to read results from
 ```
-For example, to visualize results from `./results/result-1.json`:
+For example, to visualize results from the example above (`./results/epsilon-0.1.pickle`):
 ```
-python ./vis.py --result-file=./results/result-1.json
+python ./vis.py --results-file="./results/epsilon-0.1.pickle"
 ```
 
 
