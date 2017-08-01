@@ -2,16 +2,17 @@ import argparse
 from pprint import pprint
 
 import numpy as np
-from utils import load_result
+from utils import load_results
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Data visualization for K-armed bandit.")
 
-    parser.add_argument("--result-file", type=str, required=True,
+    parser.add_argument("--results-file", type=str, required=True,
                         help="File to read results from")
 
     args = vars(parser.parse_args())
@@ -20,23 +21,41 @@ def parse_args():
 
 
 def main(args):
-  data = load_result(args["result_file"])
-  path = data["agent_path"]
-  env = data["env"]
+  results = load_results(args["results_file"])
 
-  optimal_arm = np.argmax([arm["mean"] for arm in env["arms"]])
-  rewards = [p["reward"] for p in path]
-  optimal_actions = [p["action"] == optimal_arm for p in path]
-  steps = np.arange(1, len(rewards)+1)
+  actions = results["actions"]
+  rewards = results["rewards"]
+  optimal_arms = results["optimal_arms"]
 
-  average_rewards = np.cumsum(rewards) / steps
-  optimal_action_prop = np.cumsum(optimal_actions) / steps
+  num_runs = results["num_runs"]
+  num_episodes = results["num_episodes"]
+
+  average_rewards = np.sum(rewards, axis=0) / num_runs
+  optimal_actions = np.sum(
+    actions == optimal_arms.reshape(num_runs, 1), axis=0) / num_runs
+
+  steps = np.arange(1, num_episodes+1)
+
+  cumulative_average_rewards = np.cumsum(average_rewards) / steps
+  optimal_action_prop = 100.0 * np.cumsum(optimal_actions) / steps
+
 
   fig = plt.figure(1)
-  plt.plot(steps, average_rewards)
 
-  fig = plt.figure(2)
+  plt.subplot(211)
+  plt.plot(steps, cumulative_average_rewards)
+  plt.ylabel("Average Reward")
+  plt.xlabel("Steps")
+
+  plt.subplot(212)
   plt.plot(steps, optimal_action_prop)
+  plt.ylabel("% Optimal Action")
+  plt.xlabel("Steps")
+  plt.yticks(np.arange(0, 101, 20))
+
+  percentage_fmt = '{x:.0f}%'
+  yticks = mtick.StrMethodFormatter(percentage_fmt)
+  fig.gca().yaxis.set_major_formatter(yticks)
 
   vis_dir = None
   if vis_dir is not None:

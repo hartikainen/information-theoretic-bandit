@@ -41,6 +41,9 @@ class KArmedBanditEnv:
       "{}: {}".format(i, str(arm))
       for i, arm in enumerate(self.arms)])
 
+  def get_optimal_arm(self):
+    return int(np.argmax([arm.mean for arm in self.arms]))
+
   def to_json(self):
     return {
       "k": self.k,

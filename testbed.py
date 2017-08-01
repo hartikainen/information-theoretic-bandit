@@ -7,7 +7,7 @@ import numpy as np
 
 import agents
 from environment import KArmedBanditEnv
-from utils import dump_result
+from utils import dump_results
 
 ARMS_PARAMS_CHOICES = ["constant"] + [
   fn_name for fn_name in dir(np.random) if fn_name[0] != "_"
@@ -24,6 +24,11 @@ def parse_args():
                         type=bool_type,
                         default=False,
                         help="Verbose")
+
+    parser.add_argument("--num_runs",
+                        type=int,
+                        default=2000,
+                        help="Number runs for the experiment")
 
     parser.add_argument("--num_arms", "-k",
                         type=int,
@@ -78,8 +83,11 @@ result in bandit whose all arms have mean drawn from numpy.random.normal(0, 1)
     parser.add_argument("--num-episodes", default=1000, type=int,
                         help="Number of episodes")
 
-    parser.add_argument("--result-file", default=None, type=str,
+    parser.add_argument("--results-file", default=None, type=str,
                         help="File to write results to")
+
+    parser.add_argument("--epsilon", default=0.01, type=float,
+                        help="epsilon for epsilon-greedy exploration")
 
     args = vars(parser.parse_args())
 
@@ -104,9 +112,9 @@ def get_bandit(k, arms_mean, arms_mean_params, arms_std, arms_std_params):
 
   return KArmedBanditEnv(k, mean_fn, std_fn)
 
-def get_agent(env, agent_cls_name, num_episodes):
+def get_agent(env, agent_cls_name, num_episodes, epsilon):
   AgentClass = getattr(agents, agent_cls_name)
-  agent = AgentClass(env, num_episodes)
+  agent = AgentClass(env, num_episodes, epsilon)
 
   return agent
 
@@ -116,20 +124,34 @@ def main(args):
 
   env = get_bandit(k, args["arms_mean"], args["arms_mean_params"],
                    args["arms_std"], args["arms_std_params"])
-  agent = get_agent(env, agent_cls_name, args["num_episodes"])
 
-  path = agent.learn()
+  num_runs = args["num_runs"]
+  num_episodes = args["num_episodes"]
+  epsilon = args["epsilon"]
 
-  result = args.copy()
-  result["timestamp"] = datetime.now().isoformat()
-  result["agent_path"] = path
-  result["env"] = {
-    "arms": env.arms # arm.__dict__ for arm in env.arms
-  }
+  actions = np.zeros((num_runs, num_episodes), dtype=np.min_scalar_type(k))
+  rewards = np.zeros((num_runs, num_episodes), dtype=np.float32)
+  optimal_arms = np.zeros(num_runs, dtype=np.min_scalar_type(k))
 
-  result_file = args.get("result_file")
-  if result_file is not None:
-    dump_result(result_file, result)
+  for run in range(num_runs):
+    env.reset()
+    agent = get_agent(env, agent_cls_name, num_episodes, epsilon)
+    path = agent.learn()
+    tuple_path = [(p["action"], p["reward"]) for p in path]
+
+    actions[run, :], rewards[run, :] = list(zip(*tuple_path))
+    optimal_arms[run] = env.get_optimal_arm()
+
+  results = args.copy()
+  results["timestamp"] = datetime.now().isoformat()
+  results["actions"] = actions
+  results["rewards"] = rewards
+  results["optimal_arms"] = optimal_arms
+  results["epsilon"] = epsilon
+
+  results_file = args.get("results_file")
+  if results_file is not None:
+    dump_results(results_file, results, file_format="pickle")
 
 if __name__ == "__main__":
   args = parse_args()

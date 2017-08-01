@@ -9,7 +9,8 @@ class DefaultAgent:
 
   def reset(self):
     k = len(self.env.arms)
-    self.weights = [np.random.rand() for _ in range(k)]
+    self.weights = np.random.rand(k)
+    self.N = np.zeros(k)
 
   def learn(self):
     k = len(self.weights)
@@ -22,6 +23,9 @@ class DefaultAgent:
         action = int(np.argmax(self.weights))
 
       reward = self.env.step(action)
+
+      self.N[action] += 1
+      self.weights[action] += (reward - self.weights[action]) / self.N[action]
 
       path.append({
         "action": action,
